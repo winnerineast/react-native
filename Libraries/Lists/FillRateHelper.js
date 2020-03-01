@@ -1,17 +1,12 @@
 /**
- * Copyright (c) 2015-present, Facebook, Inc.
- * All rights reserved.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  *
- * @providesModule FillRateHelper
  * @flow
  * @format
  */
-
-/* eslint-disable no-console-disallow */
 
 'use strict';
 
@@ -21,19 +16,24 @@ const warning = require('fbjs/lib/warning');
 export type FillRateInfo = Info;
 
 class Info {
-  any_blank_count = 0;
-  any_blank_ms = 0;
-  any_blank_speed_sum = 0;
-  mostly_blank_count = 0;
-  mostly_blank_ms = 0;
-  pixels_blank = 0;
-  pixels_sampled = 0;
-  pixels_scrolled = 0;
-  total_time_spent = 0;
-  sample_count = 0;
+  any_blank_count: number = 0;
+  any_blank_ms: number = 0;
+  any_blank_speed_sum: number = 0;
+  mostly_blank_count: number = 0;
+  mostly_blank_ms: number = 0;
+  pixels_blank: number = 0;
+  pixels_sampled: number = 0;
+  pixels_scrolled: number = 0;
+  total_time_spent: number = 0;
+  sample_count: number = 0;
 }
 
-type FrameMetrics = {inLayout?: boolean, length: number, offset: number};
+type FrameMetrics = {
+  inLayout?: boolean,
+  length: number,
+  offset: number,
+  ...
+};
 
 const DEBUG = false;
 
@@ -57,7 +57,9 @@ class FillRateHelper {
   _mostlyBlankStartTime = (null: ?number);
   _samplesStartTime = (null: ?number);
 
-  static addListener(callback: FillRateInfo => void): {remove: () => void} {
+  static addListener(
+    callback: FillRateInfo => void,
+  ): {remove: () => void, ...} {
     warning(
       _sampleRate !== null,
       'Call `FillRateHelper.setSampleRate` before `addListener`.',
@@ -115,13 +117,13 @@ class FillRateHelper {
       const derived = {
         avg_blankness: this._info.pixels_blank / this._info.pixels_sampled,
         avg_speed: this._info.pixels_scrolled / (total_time_spent / 1000),
-        avg_speed_when_any_blank: this._info.any_blank_speed_sum /
-          this._info.any_blank_count,
-        any_blank_per_min: this._info.any_blank_count /
-          (total_time_spent / 1000 / 60),
+        avg_speed_when_any_blank:
+          this._info.any_blank_speed_sum / this._info.any_blank_count,
+        any_blank_per_min:
+          this._info.any_blank_count / (total_time_spent / 1000 / 60),
         any_blank_time_frac: this._info.any_blank_ms / total_time_spent,
-        mostly_blank_per_min: this._info.mostly_blank_count /
-          (total_time_spent / 1000 / 60),
+        mostly_blank_per_min:
+          this._info.mostly_blank_count / (total_time_spent / 1000 / 60),
         mostly_blank_time_frac: this._info.mostly_blank_ms / total_time_spent,
       };
       for (const key in derived) {
@@ -135,19 +137,22 @@ class FillRateHelper {
 
   computeBlankness(
     props: {
-      data: Array<any>,
-      getItemCount: (data: Array<any>) => number,
+      data: any,
+      getItemCount: (data: any) => number,
       initialNumToRender: number,
+      ...
     },
     state: {
       first: number,
       last: number,
+      ...
     },
     scrollMetrics: {
       dOffset: number,
       offset: number,
       velocity: number,
       visibleLength: number,
+      ...
     },
   ): number {
     if (

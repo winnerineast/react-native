@@ -1,10 +1,8 @@
-/**
- * Copyright (c) 2015-present, Facebook, Inc.
- * All rights reserved.
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  */
 
 #import "UIView+React.h"
@@ -27,30 +25,44 @@
   objc_setAssociatedObject(self, @selector(reactTag), reactTag, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-- (NSNumber *)nativeID
+- (NSNumber *)rootTag
 {
   return objc_getAssociatedObject(self, _cmd);
 }
 
-- (void)setNativeID:(NSNumber *)nativeID
+- (void)setRootTag:(NSNumber *)rootTag
+{
+  objc_setAssociatedObject(self, @selector(rootTag), rootTag, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (NSString *)nativeID
+{
+  return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNativeID:(NSString *)nativeID
 {
   objc_setAssociatedObject(self, @selector(nativeID), nativeID, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-#if RCT_DEV
-
-- (RCTShadowView *)_DEBUG_reactShadowView
+- (BOOL)shouldAccessibilityIgnoresInvertColors
 {
-  return objc_getAssociatedObject(self, _cmd);
-}
-
-- (void)_DEBUG_setReactShadowView:(RCTShadowView *)shadowView
-{
-  // Use assign to avoid keeping the shadowView alive it if no longer exists
-  objc_setAssociatedObject(self, @selector(_DEBUG_reactShadowView), shadowView, OBJC_ASSOCIATION_ASSIGN);
-}
-
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
+    if (@available(iOS 11.0, *)) {
+        return self.accessibilityIgnoresInvertColors;
+    }
 #endif
+    return NO;
+}
+
+- (void)setShouldAccessibilityIgnoresInvertColors:(BOOL)shouldAccessibilityIgnoresInvertColors
+{
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
+    if (@available(iOS 11.0, *)) {
+        self.accessibilityIgnoresInvertColors = shouldAccessibilityIgnoresInvertColors;
+    }
+#endif
+}
 
 - (BOOL)isReactRootView
 {
@@ -172,6 +184,11 @@
   }
 }
 
+- (void)didSetProps:(__unused NSArray<NSString *> *)changedProps
+{
+  // The default implementation does nothing.
+}
+
 - (void)reactSetFrame:(CGRect)frame
 {
   // These frames are in terms of anchorPoint = topLeft, but internally the
@@ -191,11 +208,6 @@
 
   self.center = position;
   self.bounds = bounds;
-}
-
-- (void)reactSetInheritedBackgroundColor:(__unused UIColor *)inheritedBackgroundColor
-{
-  // Does nothing by default
 }
 
 - (UIViewController *)reactViewController
@@ -288,11 +300,72 @@
   return UIEdgeInsetsInsetRect(self.bounds, self.reactCompoundInsets);
 }
 
-#pragma mark - Accessiblity
+#pragma mark - Accessibility
 
 - (UIView *)reactAccessibilityElement
 {
   return self;
+}
+
+- (NSArray<NSDictionary *> *)accessibilityActions
+{
+  return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setAccessibilityActions:(NSArray<NSDictionary *> *)accessibilityActions
+{
+  objc_setAssociatedObject(self, @selector(accessibilityActions), accessibilityActions, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (NSString *)accessibilityRole
+{
+  return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setAccessibilityRole:(NSString *)accessibilityRole
+{
+  objc_setAssociatedObject(self, @selector(accessibilityRole), accessibilityRole, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (NSDictionary<NSString *, id> *)accessibilityState
+{
+  return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setAccessibilityState:(NSDictionary<NSString *, id> *)accessibilityState
+{
+  objc_setAssociatedObject(self, @selector(accessibilityState), accessibilityState, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (NSDictionary<NSString *, id> *)accessibilityValueInternal
+{
+  return objc_getAssociatedObject(self, _cmd);
+}
+- (void)setAccessibilityValueInternal:(NSDictionary<NSString *, id> *)accessibilityValue
+{
+  objc_setAssociatedObject(self, @selector(accessibilityValueInternal), accessibilityValue, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+#pragma mark - Debug
+- (void)react_addRecursiveDescriptionToString:(NSMutableString *)string atLevel:(NSUInteger)level
+{
+  for (NSUInteger i = 0; i < level; i++) {
+    [string appendString:@"   | "];
+  }
+
+  [string appendString:self.description];
+  [string appendString:@"\n"];
+
+  for (UIView *subview in self.subviews) {
+    [subview react_addRecursiveDescriptionToString:string atLevel:level + 1];
+  }
+}
+
+- (NSString *)react_recursiveDescription
+{
+  NSMutableString *description = [NSMutableString string];
+  [self react_addRecursiveDescriptionToString:description atLevel:0];
+  return description;
 }
 
 @end

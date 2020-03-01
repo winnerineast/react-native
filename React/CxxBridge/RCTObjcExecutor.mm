@@ -1,10 +1,8 @@
-/**
- * Copyright (c) 2015-present, Facebook, Inc.
- * All rights reserved.
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  */
 
 #import "RCTObjcExecutor.h"
@@ -15,9 +13,11 @@
 #import <React/RCTLog.h>
 #import <React/RCTProfile.h>
 #import <React/RCTUtils.h>
-#import <cxxreact/Executor.h>
+#import <cxxreact/JSBigString.h>
+#import <cxxreact/JSExecutor.h>
 #import <cxxreact/MessageQueueThread.h>
 #import <cxxreact/ModuleRegistry.h>
+#import <cxxreact/RAMBundleRegistry.h>
 #import <folly/json.h>
 
 namespace facebook {
@@ -39,17 +39,20 @@ public:
                   std::shared_ptr<ExecutorDelegate> delegate)
     : m_jse(jse)
     , m_errorBlock(errorBlock)
-    , m_jsThread(std::move(jsThread))
     , m_delegate(std::move(delegate))
+    , m_jsThread(std::move(jsThread))
   {
     m_jsCallback = ^(id json, NSError *error) {
       if (error) {
-        m_errorBlock(error);
+        // Do not use "m_errorBlock" here as the bridge might be in the middle
+        // of invalidation as a result of error handling and "this" can be
+        // already deallocated.
+        errorBlock(error);
         return;
       }
 
       m_jsThread->runOnQueue([this, json]{
-        m_delegate->callNativeModules(*this, [RCTConvert folly_dynamic:json], true);
+        m_delegate->callNativeModules(*this, convertIdToFollyDynamic(json), true);
       });
     };
 
@@ -90,8 +93,12 @@ public:
       }];
   }
 
-  void setJSModulesUnbundle(std::unique_ptr<JSModulesUnbundle>) override {
-    RCTLogWarn(@"Unbundle is not supported in RCTObjcExecutor");
+  void setBundleRegistry(std::unique_ptr<RAMBundleRegistry>) override {
+    RCTAssert(NO, @"RAM bundles are not supported in RCTObjcExecutor");
+  }
+
+  void registerBundle(uint32_t __unused bundleId, const std::string __unused &bundlePath) override {
+    RCTAssert(NO, @"RAM bundles are not supported in RCTObjcExecutor");
   }
 
   void callFunction(const std::string &module, const std::string &method,
@@ -116,12 +123,9 @@ public:
            callback:m_errorBlock];
   }
 
-  virtual bool supportsProfiling() override {
-    return false;
-  };
-  virtual void startProfiler(const std::string &titleString) override {};
-  virtual void stopProfiler(const std::string &titleString,
-                            const std::string &filename) override {};
+  virtual std::string getDescription() override {
+    return [NSStringFromClass([m_jse class]) UTF8String];
+  }
 
 private:
   id<RCTJavaScriptExecutor> m_jse;

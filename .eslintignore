@@ -1,6 +1,12 @@
 # node_modules ignored by default
 
-**/staticBundle.js
 **/main.js
+**/staticBundle.js
+bots/node_modules
+docs/generatedComponentApiDocs.js
+flow/
+Libraries/Renderer/*
 Libraries/vendor/**/*
-packager/src/worker-farm/**/*
+packages/*/node_modules
+pr-inactivity-bookmarklet.js
+question-bookmarklet.js

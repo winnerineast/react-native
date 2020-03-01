@@ -1,22 +1,28 @@
 /**
- * Copyright (c) 2015-present, Facebook, Inc.
- * All rights reserved.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  *
- * @providesModule processColor
- * @flow
+ * @format
+ * @flow strict-local
  */
+
 'use strict';
 
-const Platform = require('Platform');
+const Platform = require('../Utilities/Platform');
 
-const normalizeColor = require('normalizeColor');
+const normalizeColor = require('./normalizeColor');
+
+// TODO: This is an empty object for now, just to enforce that everything using this
+// downstream is correct. This will be replaced with an import to other files
+// with a platform specific implementation. See the PR for more information
+// https://github.com/facebook/react-native/pull/27908
+opaque type NativeColorType = {};
+export type ProcessedColorValue = ?number | NativeColorType;
 
 /* eslint no-bitwise: 0 */
-function processColor(color?: string | number): ?number {
+function processColor(color?: ?(string | number)): ProcessedColorValue {
   if (color === undefined || color === null) {
     return color;
   }
@@ -27,7 +33,7 @@ function processColor(color?: string | number): ?number {
   }
 
   // Converts 0xrrggbbaa into 0xaarrggbb
-  int32Color = (int32Color << 24 | int32Color >>> 8) >>> 0;
+  int32Color = ((int32Color << 24) | (int32Color >>> 8)) >>> 0;
 
   if (Platform.OS === 'android') {
     // Android use 32 bit *signed* integer to represent the color

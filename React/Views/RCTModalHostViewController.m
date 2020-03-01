@@ -1,10 +1,8 @@
-/**
- * Copyright (c) 2015-present, Facebook, Inc.
- * All rights reserved.
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  */
 
 #import "RCTModalHostViewController.h"
@@ -26,6 +24,13 @@
   if (!(self = [super init])) {
     return nil;
   }
+
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && defined(__IPHONE_13_0) && \
+__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_13_0
+  if (@available(iOS 13.0, *)) {
+    self.modalInPresentation = YES;
+  }
+#endif
 
 #if !TARGET_OS_TV
   _preferredStatusBarStyle = [RCTSharedApplication() statusBarStyle];

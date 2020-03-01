@@ -1,18 +1,15 @@
-<details>
-  Thanks for submitting a PR! Please read these instructions carefully:
+<!-- Thanks for submitting a pull request! We appreciate you spending the time to work on these changes. Please provide enough information so that others can review your pull request. The three fields below are mandatory. -->
 
-  - [ ] Explain the **motivation** for making this change.
-  - [ ] Provide a **test plan** demonstrating that the code is solid.
-  - [ ] Match the **code formatting** of the rest of the codebase.
-  - [ ] Target the `master` branch, NOT a "stable" branch.
+## Summary
 
-  Please read the [Contribution Guidelines](https://github.com/facebook/react-native/blob/master/CONTRIBUTING.md) to learn more about contributing to React Native.
-</details>
+<!-- Explain the **motivation** for making this change. What existing problem does the pull request solve? -->
 
-## Motivation (required)
+## Changelog
 
-_What existing problem does the pull request solve?_
+<!-- Help reviewers and the release process by writing your own changelog entry. See https://github.com/facebook/react-native/wiki/Changelog for an example. -->
 
-## Test Plan (required)
+[CATEGORY] [TYPE] - Message
 
-_A good test plan has the exact commands you ran and their output, provides screenshots or videos if the pull request changes UI or updates the website._
+## Test Plan
+
+<!-- Demonstrate the code is solid. Example: The exact commands you ran and their output, screenshots / videos if the pull request changes the user interface. -->

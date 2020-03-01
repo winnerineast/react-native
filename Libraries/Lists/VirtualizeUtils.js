@@ -1,18 +1,16 @@
 /**
- * Copyright (c) 2015-present, Facebook, Inc.
- * All rights reserved.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  *
- * @providesModule VirtualizeUtils
  * @flow
  * @format
  */
+
 'use strict';
 
-const invariant = require('fbjs/lib/invariant');
+const invariant = require('invariant');
 
 /**
  * Used to find the indices of the frames that overlap the given offsets. Useful for finding the
@@ -22,20 +20,28 @@ const invariant = require('fbjs/lib/invariant');
 function elementsThatOverlapOffsets(
   offsets: Array<number>,
   itemCount: number,
-  getFrameMetrics: (index: number) => {length: number, offset: number},
+  getFrameMetrics: (
+    index: number,
+  ) => {
+    length: number,
+    offset: number,
+    ...
+  },
 ): Array<number> {
   const out = [];
+  let outLength = 0;
   for (let ii = 0; ii < itemCount; ii++) {
     const frame = getFrameMetrics(ii);
     const trailingOffset = frame.offset + frame.length;
     for (let kk = 0; kk < offsets.length; kk++) {
       if (out[kk] == null && trailingOffset >= offsets[kk]) {
         out[kk] = ii;
+        outLength++;
         if (kk === offsets.length - 1) {
           invariant(
-            out.length === offsets.length,
-            'bad offsets input, should be in increasing order ' +
-              JSON.stringify(offsets),
+            outLength === offsets.length,
+            'bad offsets input, should be in increasing order: %s',
+            JSON.stringify(offsets),
           );
           return out;
         }
@@ -52,8 +58,16 @@ function elementsThatOverlapOffsets(
  * faster.
  */
 function newRangeCount(
-  prev: {first: number, last: number},
-  next: {first: number, last: number},
+  prev: {
+    first: number,
+    last: number,
+    ...
+  },
+  next: {
+    first: number,
+    last: number,
+    ...
+  },
 ): number {
   return (
     next.last -
@@ -78,16 +92,32 @@ function computeWindowedRenderLimits(
     getItemCount: (data: any) => number,
     maxToRenderPerBatch: number,
     windowSize: number,
+    ...
   },
-  prev: {first: number, last: number},
-  getFrameMetricsApprox: (index: number) => {length: number, offset: number},
+  prev: {
+    first: number,
+    last: number,
+    ...
+  },
+  getFrameMetricsApprox: (
+    index: number,
+  ) => {
+    length: number,
+    offset: number,
+    ...
+  },
   scrollMetrics: {
     dt: number,
     offset: number,
     velocity: number,
     visibleLength: number,
+    ...
   },
-): {first: number, last: number} {
+): {
+  first: number,
+  last: number,
+  ...
+} {
   const {data, getItemCount, maxToRenderPerBatch, windowSize} = props;
   const itemCount = getItemCount(data);
   if (itemCount === 0) {
@@ -105,9 +135,8 @@ function computeWindowedRenderLimits(
   // Considering velocity seems to introduce more churn than it's worth.
   const leadFactor = 0.5; // Math.max(0, Math.min(1, velocity / 25 + 0.5));
 
-  const fillPreference = velocity > 1
-    ? 'after'
-    : velocity < -1 ? 'before' : 'none';
+  const fillPreference =
+    velocity > 1 ? 'after' : velocity < -1 ? 'before' : 'none';
 
   const overscanBegin = Math.max(
     0,
@@ -115,7 +144,16 @@ function computeWindowedRenderLimits(
   );
   const overscanEnd = Math.max(0, visibleEnd + leadFactor * overscanLength);
 
-  // Find the indices that correspond to the items at the render boundaries we're targetting.
+  const lastItemOffset = getFrameMetricsApprox(itemCount - 1).offset;
+  if (lastItemOffset < overscanBegin) {
+    // Entire list is before our overscan window
+    return {
+      first: Math.max(0, itemCount - 1 - maxToRenderPerBatch),
+      last: itemCount - 1,
+    };
+  }
+
+  // Find the indices that correspond to the items at the render boundaries we're targeting.
   let [overscanFirst, first, last, overscanLast] = elementsThatOverlapOffsets(
     [overscanBegin, visibleBegin, visibleEnd, overscanEnd],
     props.getItemCount(props.data),
@@ -124,9 +162,10 @@ function computeWindowedRenderLimits(
   overscanFirst = overscanFirst == null ? 0 : overscanFirst;
   first = first == null ? Math.max(0, overscanFirst) : first;
   overscanLast = overscanLast == null ? itemCount - 1 : overscanLast;
-  last = last == null
-    ? Math.min(overscanLast, first + maxToRenderPerBatch - 1)
-    : last;
+  last =
+    last == null
+      ? Math.min(overscanLast, first + maxToRenderPerBatch - 1)
+      : last;
   const visible = {first, last};
 
   // We want to limit the number of new cells we're rendering per batch so that we can fill the
@@ -174,13 +213,15 @@ function computeWindowedRenderLimits(
     }
   }
   if (
-    !(last >= first &&
+    !(
+      last >= first &&
       first >= 0 &&
       last < itemCount &&
       first >= overscanFirst &&
       last <= overscanLast &&
       first <= visible.first &&
-      last >= visible.last)
+      last >= visible.last
+    )
   ) {
     throw new Error(
       'Bad window calculation ' +
